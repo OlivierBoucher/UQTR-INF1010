@@ -1,7 +1,5 @@
 package com.olivierboucher.reseau2.Chat.Server;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,19 +10,32 @@ import java.net.Socket;
  */
 public class ServerClient {
     private Socket connection;
-    private IClientDelegate delegate;
+    private IServerClientDelegate delegate;
     private Thread inputThread;
     private Boolean isRunning;
+    private Boolean confirmed;
+    private String nick;
+    private CommandParser interpreter;
 
-    public ServerClient(Socket connection, IClientDelegate delegate){
+    public ServerClient(Socket connection, IServerClientDelegate delegate){
         this.connection = connection;
         this.delegate = delegate;
+        this.interpreter = new CommandParser();
+        this.confirmed = false;
+        this.nick = "";
         startAcceptingInput();
     }
 
     public void closeConnection() throws IOException {
         isRunning = false;
-        connection.close();
+        connection.close(); //NOTE(Olivier): This also closes the input/output streams
+        try {
+            //We leave 100ms to the thread to join gracely, then we kill it
+            inputThread.join(100);
+        }
+        catch (InterruptedException e){
+            //Do nothing, the thread has already been interrupted
+        }
     }
 
     private void startAcceptingInput(){
@@ -37,9 +48,11 @@ public class ServerClient {
                     while(isRunning){
                         String cmdString;
                         if((cmdString = reader.readLine()) != null){
-                            System.out.println(cmdString);
+                            delegate.newCommandRecievedFromClient(ServerClient.this, interpreter.interpretCommandString(cmdString));
                         }
                     }
+
+                } catch (CommandParserException e) {
 
                 } catch (IOException e) {
 
@@ -62,4 +75,19 @@ public class ServerClient {
         isRunning = false;
     }
 
+    public Boolean getConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(Boolean confirmed) {
+        this.confirmed = confirmed;
+    }
+
+    public String getNick() {
+        return nick;
+    }
+
+    public void setNick(String nick) {
+        this.nick = nick;
+    }
 }
