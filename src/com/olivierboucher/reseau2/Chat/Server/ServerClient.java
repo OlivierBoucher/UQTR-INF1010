@@ -46,7 +46,16 @@ public class ServerClient {
             bufferedWriter.write(cmd.toCommandString());
         }
         catch (IOException e) {
-            //TODO(Olivier): Cannot write to stream, close connection
+            //Cannot really do anything, just close the connection and remove the client
+            //In the finally block
+            System.out.println("IOException occured while writing");
+        } finally {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                //Connection is already closed
+                delegate.removeHungClient(ServerClient.this);
+            }
         }
     }
 
@@ -73,7 +82,7 @@ public class ServerClient {
                 } catch (IOException e) {
                     //Cannot really do anything, just close the connection and remove the client
                     //In the finally block
-                    System.out.println("IOException occured");
+                    System.out.println("IOException occured while reading");
                 } finally {
                     try {
                         connection.close();
