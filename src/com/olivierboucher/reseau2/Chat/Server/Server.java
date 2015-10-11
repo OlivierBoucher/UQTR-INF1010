@@ -63,11 +63,11 @@ public class Server implements IServerClientDelegate {
                     message.append(serverClient.getNick());
 
                     if(command.getMessage() == null || command.getMessage().equalsIgnoreCase("")) {
-                        message.append(" has disconnected with message: ");
-                        message.append(command.getMessage());
+                        message.append("has disconnected.");
                     }
                     else {
-                        message.append("has disconnected.");
+                        message.append(" has disconnected with message: ");
+                        message.append(command.getMessage());
                     }
 
                     //TODO(Olivier): Broadcast the message to everyone
