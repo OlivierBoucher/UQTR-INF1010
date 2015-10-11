@@ -52,6 +52,7 @@ public class ServerClient {
         } finally {
             try {
                 connection.close();
+                delegate.removeHungClient(ServerClient.this);
             } catch (IOException e) {
                 //Connection is already closed
                 delegate.removeHungClient(ServerClient.this);
@@ -86,6 +87,7 @@ public class ServerClient {
                 } finally {
                     try {
                         connection.close();
+                        delegate.removeHungClient(ServerClient.this);
                     } catch (IOException e) {
                         //Connection is already closed
                         delegate.removeHungClient(ServerClient.this);
