@@ -6,13 +6,18 @@ import com.olivierboucher.reseau2.Chat.Server.Server;
  * Created by olivier on 2015-10-06.
  */
 public class Command {
+    //Special strings
+    public static final String NEWLINE = "|NEWLINE|";
+    //Error command verbs
     public static final String NICK_TAKEN_ERROR = "100";
     public static final String TARGET_NOT_FOUND_ERROR = "101";
     public static final String CLIENT_UNCONFIRMED_ERROR = "102";
     public static final String COMMAND_NOT_FOUND_ERROR = "103";
+    //Basic command verbs
     public static final String NICK_CMD = "NICK";
     public static final String DISCONNECT_CMD = "DISCONNECT";
     public static final String MSG_CMD = "MSG";
+    public static final String LIST_CMD = "LIST";
 
     public static Command getNickTakenCommand(String nick) {
         Command cmd = new Command();

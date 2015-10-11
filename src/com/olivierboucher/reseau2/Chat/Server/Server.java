@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Created by olivier on 2015-10-06.
@@ -136,6 +137,32 @@ public class Server implements IServerClientDelegate {
                     //Client is not confirmed, has no nick
                     serverClient.sendCommand(Command.getUnconfirmedClientError());
                 }
+                break;
+
+            case Command.LIST_CMD:
+                //List concurrency again..
+                StringBuilder message = new StringBuilder();
+                message.append("There is ");
+
+                synchronized (this) {
+                    message.append(clients.size());
+                    message.append(String.format("%s", clients.size()>1 ? "persons online." : "person online."));
+                    message.append(Command.NEWLINE);
+
+                    clients.stream()
+                            .filter(ServerClient::getConfirmed)
+                            .forEach(x -> {
+                                message.append(x.getNick());
+                                message.append(Command.NEWLINE);
+                            });
+                }
+
+                Command cmd = new Command();
+                cmd.setSender(SERVER_NICK);
+                cmd.setVerb(Command.MSG_CMD);
+                cmd.setMessage(message.toString());
+
+                serverClient.sendCommand(cmd);
                 break;
 
             default:
