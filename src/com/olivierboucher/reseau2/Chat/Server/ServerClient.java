@@ -49,12 +49,13 @@ public class ServerClient {
             //Cannot really do anything, just close the connection and remove the client
             //In the finally block
             System.out.println("IOException occured while writing");
-        } finally {
             try {
                 connection.close();
+                System.out.println("Removing hung client from sendCommand #1");
                 delegate.removeHungClient(ServerClient.this);
-            } catch (IOException e) {
+            } catch (IOException ee) {
                 //Connection is already closed
+                System.out.println("Removing hung client from sendCommand #2");
                 delegate.removeHungClient(ServerClient.this);
             }
         }
@@ -75,7 +76,7 @@ public class ServerClient {
                                 delegate.newCommandRecievedFromClient(ServerClient.this, interpreter.interpretCommandString(cmdString));
                             } catch (CommandParserException e) {
                                 //Ignore the command
-                                System.out.println("Recieved an invalid commandString");
+                                System.out.println("Received an invalid commandString");
                             }
                         }
                     }
@@ -84,12 +85,13 @@ public class ServerClient {
                     //Cannot really do anything, just close the connection and remove the client
                     //In the finally block
                     System.out.println("IOException occured while reading");
-                } finally {
                     try {
                         connection.close();
+                        System.out.println("Removing hung client from read thread #1");
                         delegate.removeHungClient(ServerClient.this);
-                    } catch (IOException e) {
+                    } catch (IOException ee) {
                         //Connection is already closed
+                        System.out.println("Removing hung client from read thread #2");
                         delegate.removeHungClient(ServerClient.this);
                     }
                 }

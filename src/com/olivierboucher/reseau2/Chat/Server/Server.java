@@ -37,6 +37,7 @@ public class Server implements IServerClientDelegate {
     @Override
     public void newCommandRecievedFromClient(ServerClient serverClient, Command command) {
 
+        System.out.println(String.format("Handling cmd: %s", command.toCommandString()));
         switch (command.getVerb()){
             case Command.NICK_CMD:
                 String desiredNick = command.getMessage();
@@ -58,6 +59,7 @@ public class Server implements IServerClientDelegate {
                 if(!taken) {
                     serverClient.setNick(desiredNick);
                     serverClient.setConfirmed(true);
+                    System.out.println(String.format("Nick confirmed %s", desiredNick));
                 }
                 else {
                     serverClient.sendCommand(Command.getNickTakenCommand(desiredNick));
@@ -126,10 +128,9 @@ public class Server implements IServerClientDelegate {
                     else {
                         //Broadcast to everyone
                         //List concurrency once again
+                        System.out.println(String.format("Broadcasting: %s", command.getMessage()));
                         synchronized (this) {
-                            for(ServerClient client : clients) {
-                                client.sendCommand(command);
-                            }
+                            clients.stream().filter(ServerClient::getConfirmed).forEach(x -> x.sendCommand(command));
                         }
                     }
                 }
@@ -175,6 +176,7 @@ public class Server implements IServerClientDelegate {
     @Override
     public void removeHungClient(ServerClient serverClient) {
         //Again for list concurrency
+        System.out.println("Removing hung client");
         synchronized (this){
             clients.remove(serverClient);
         }

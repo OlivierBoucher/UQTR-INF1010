@@ -1,8 +1,10 @@
 package com.olivierboucher.reseau2.Chat.Client;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import com.olivierboucher.reseau2.Chat.Common.Command;
+import com.olivierboucher.reseau2.Chat.Common.CommandParser;
+import com.olivierboucher.reseau2.Chat.Common.CommandParserException;
+
+import java.io.*;
 import java.net.Socket;
 
 /**
@@ -12,11 +14,51 @@ public class ChatClient {
     private Socket connection;
     private BufferedWriter writer;
     private Boolean keepAlive;
+    private Thread readingThread;
+    private CommandParser parser;
 
     public ChatClient(String host, int port) throws IOException {
         keepAlive = true;
         connection = new Socket(host, port);
         writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+        parser = new CommandParser();
+
+        readingThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+                    while(keepAlive){
+                        System.out.println("Waiting...");
+                        String cmdString;
+                        if((cmdString = reader.readLine()) != null){
+                            try {
+                                Command cmd = parser.interpretCommandString(cmdString);
+                                System.out.println(cmdString);
+                            } catch (CommandParserException e) {
+                                //Ignore the command
+                                System.out.println("Recieved an invalid commandString");
+                            }
+                        }
+                    }
+
+                } catch (IOException e) {
+                    //Cannot really do anything, just close the connection and remove the client
+                    //In the finally block
+                    System.out.println("IOException occured while reading");
+                    try {
+                        connection.close();
+                    } catch (IOException ee) {
+                        //Connection is already closed
+                    }
+                }
+
+                System.out.println("Exited read loop");
+            }
+        };
+
+        readingThread.start();
     }
 
     public void sendCommand(String command){

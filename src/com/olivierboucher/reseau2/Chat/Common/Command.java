@@ -104,7 +104,7 @@ public class Command {
 
             if(sender != null) {
                 cmd.append(sender);
-                cmd.append(" :");
+                cmd.append(": ");
             }
 
             cmd.append(verb.toUpperCase());
