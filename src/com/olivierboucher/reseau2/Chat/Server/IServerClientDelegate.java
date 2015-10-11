@@ -7,4 +7,5 @@ import com.olivierboucher.reseau2.Chat.Common.Command;
  */
 public interface IServerClientDelegate {
     void newCommandRecievedFromClient(ServerClient serverClient, Command command);
+    void removeHungClient(ServerClient serverClient);
 }

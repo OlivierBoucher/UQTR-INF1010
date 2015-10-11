@@ -61,21 +61,25 @@ public class ServerClient {
                     while(isRunning){
                         String cmdString;
                         if((cmdString = reader.readLine()) != null){
-                            delegate.newCommandRecievedFromClient(ServerClient.this, interpreter.interpretCommandString(cmdString));
+                            try {
+                                delegate.newCommandRecievedFromClient(ServerClient.this, interpreter.interpretCommandString(cmdString));
+                            } catch (CommandParserException e) {
+                                //Ignore the command
+                                System.out.println("Recieved an invalid commandString");
+                            }
                         }
                     }
 
-                } catch (CommandParserException e) {
-
                 } catch (IOException e) {
-
+                    //Cannot really do anything, just close the connection and remove the client
+                    //In the finally block
+                    System.out.println("IOException occured");
                 } finally {
                     try {
                         connection.close();
                     } catch (IOException e) {
                         //Connection is already closed
-                        //TODO: Send command to delegate to remove from list
-                        e.printStackTrace();
+                        delegate.removeHungClient(ServerClient.this);
                     }
                 }
             }

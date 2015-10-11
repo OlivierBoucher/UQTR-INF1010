@@ -171,4 +171,12 @@ public class Server implements IServerClientDelegate {
                 break;
         }
     }
+
+    @Override
+    public void removeHungClient(ServerClient serverClient) {
+        //Again for list concurrency
+        synchronized (this){
+            clients.remove(serverClient);
+        }
+    }
 }
