@@ -1,4 +1,4 @@
-package com.olivierboucher.reseau2.Chat.Server;
+package com.olivierboucher.reseau2.Chat.Common;
 
 /**
  * Created by olivier on 2015-10-11.

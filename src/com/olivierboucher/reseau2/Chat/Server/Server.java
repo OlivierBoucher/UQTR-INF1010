@@ -1,6 +1,7 @@
 package com.olivierboucher.reseau2.Chat.Server;
 
-import javax.swing.text.html.Option;
+import com.olivierboucher.reseau2.Chat.Common.Command;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.Optional;
  * Created by olivier on 2015-10-06.
  */
 public class Server implements IServerClientDelegate {
+    public static final String SERVER_NICK = "$SERVER";
     private int port;
     private ServerSocket srvSocket;
     private List<ServerClient> clients;
@@ -35,7 +37,7 @@ public class Server implements IServerClientDelegate {
     public void newCommandRecievedFromClient(ServerClient serverClient, Command command) {
 
         switch (command.getVerb()){
-            case "NICK":
+            case Command.NICK_CMD:
                 String desiredNick = command.getMessage();
                 Boolean taken = false;
 
@@ -43,7 +45,11 @@ public class Server implements IServerClientDelegate {
                 synchronized (this){
                     taken = clients
                            .stream()
-                           .filter(x -> x.getNick().equalsIgnoreCase(desiredNick) && x.getConfirmed())
+                           .filter(x -> (
+                                   x.getNick().equalsIgnoreCase(desiredNick) ||
+                                   x.getNick().equalsIgnoreCase(SERVER_NICK)) &&
+                                   x.getConfirmed()
+                           )
                            .findAny()
                            .isPresent();
                 }
@@ -53,11 +59,11 @@ public class Server implements IServerClientDelegate {
                     serverClient.setConfirmed(true);
                 }
                 else {
-                    //TODO(Olivier): Send nick taken error
+                    serverClient.sendCommand(Command.getNickTakenCommand(desiredNick));
                 }
                 break;
 
-            case "DISCONNECT":
+            case Command.DISCONNECT_CMD:
                 if(serverClient.getConfirmed()){
                     StringBuilder message = new StringBuilder();
                     message.append(serverClient.getNick());
@@ -70,7 +76,14 @@ public class Server implements IServerClientDelegate {
                         message.append(command.getMessage());
                     }
 
-                    //TODO(Olivier): Broadcast the message to everyone
+                    Command cmd = Command.getDisconnectCommand(message.toString());
+
+                    //List concurrency once again
+                    synchronized (this) {
+                        for(ServerClient client : clients) {
+                            client.sendCommand(cmd);
+                        }
+                    }
                 }
 
                 try {
@@ -88,17 +101,46 @@ public class Server implements IServerClientDelegate {
 
                 break;
 
-            case "MSG":
+            case Command.MSG_CMD:
                 if(serverClient.getConfirmed()){
-                    //TODO(Olivier): Broadcast the message to everyone
+                    if(command.getTargetId() == Command.CommandTarget.PRIVATE){
+                        String targetNick = command.getTargetName();
+                        Optional<ServerClient> foundTarget;
+
+                        synchronized (this){
+                            foundTarget = clients
+                                    .stream()
+                                    .filter(x -> x.getNick().equalsIgnoreCase(targetNick) && x.getConfirmed())
+                                    .findAny();
+                        }
+
+                        if(foundTarget.isPresent()){
+                            foundTarget.get().sendCommand(command);
+                        }
+                        else {
+                            //Send target not found error
+                            serverClient.sendCommand(Command.getTargetNotFoundError(targetNick));
+                        }
+                    }
+                    else {
+                        //Broadcast to everyone
+                        //List concurrency once again
+                        synchronized (this) {
+                            for(ServerClient client : clients) {
+                                client.sendCommand(command);
+                            }
+                        }
+                    }
                 }
                 else {
-                    //TODO(Olivier): Send error must acquire nick prior
+                    //Client is not confirmed, has no nick
+                    serverClient.sendCommand(Command.getUnconfirmedClientError());
                 }
                 break;
 
             default:
-                //TODO(Olivier): Send error unknown command
+                //Command not found
+                serverClient.sendCommand(Command.getCommandNotFoundError(command.getVerb()));
                 break;
         }
     }

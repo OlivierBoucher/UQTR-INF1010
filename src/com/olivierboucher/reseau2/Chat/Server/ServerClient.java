@@ -1,8 +1,10 @@
 package com.olivierboucher.reseau2.Chat.Server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.olivierboucher.reseau2.Chat.Common.Command;
+import com.olivierboucher.reseau2.Chat.Common.CommandParser;
+import com.olivierboucher.reseau2.Chat.Common.CommandParserException;
+
+import java.io.*;
 import java.net.Socket;
 
 /**
@@ -16,6 +18,7 @@ public class ServerClient {
     private Boolean confirmed;
     private String nick;
     private CommandParser interpreter;
+    private BufferedWriter bufferedWriter;
 
     public ServerClient(Socket connection, IServerClientDelegate delegate){
         this.connection = connection;
@@ -38,12 +41,22 @@ public class ServerClient {
         }
     }
 
+    public void sendCommand(Command cmd) {
+        try{
+            bufferedWriter.write(cmd.toCommandString());
+        }
+        catch (IOException e) {
+            //TODO(Olivier): Cannot write to stream, close connection
+        }
+    }
+
     private void startAcceptingInput(){
         isRunning = true;
         inputThread = new Thread() {
             public void run() {
                 try {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    bufferedWriter = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
 
                     while(isRunning){
                         String cmdString;
@@ -74,6 +87,7 @@ public class ServerClient {
     private void stopRecievingInput(){
         isRunning = false;
     }
+
 
     public Boolean getConfirmed() {
         return confirmed;
