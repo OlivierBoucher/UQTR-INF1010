@@ -1,6 +1,5 @@
 package com.olivierboucher.reseau2.Chat.Client;
 
-import com.olivierboucher.reseau2.Chat.Common.Command;
 import com.olivierboucher.reseau2.Chat.Common.CommandParser;
 import com.olivierboucher.reseau2.Chat.Common.CommandParserException;
 
@@ -16,26 +15,25 @@ public class ChatClient {
     private Boolean keepAlive;
     private Thread readingThread;
     private CommandParser parser;
+    private IClientMessageHandler messageHandler;
 
-    public ChatClient(String host, int port) throws IOException {
+    public ChatClient(String host, int port, IClientMessageHandler msgHandler) throws IOException {
         keepAlive = true;
         connection = new Socket(host, port);
         writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
         parser = new CommandParser();
+        messageHandler = msgHandler;
 
         readingThread = new Thread() {
-            @Override
             public void run() {
                 try {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
                     while(keepAlive){
-                        System.out.println("Waiting...");
                         String cmdString;
                         if((cmdString = reader.readLine()) != null){
                             try {
-                                Command cmd = parser.interpretCommandString(cmdString);
-                                System.out.println(cmdString);
+                                msgHandler.handleCommand(parser.interpretCommandString(cmdString));
                             } catch (CommandParserException e) {
                                 //Ignore the command
                                 System.out.println("Recieved an invalid commandString");

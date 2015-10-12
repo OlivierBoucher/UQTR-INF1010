@@ -44,6 +44,8 @@ public class ServerClient {
     public void sendCommand(Command cmd) {
         try{
             bufferedWriter.write(cmd.toCommandString());
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
         }
         catch (IOException e) {
             //Cannot really do anything, just close the connection and remove the client

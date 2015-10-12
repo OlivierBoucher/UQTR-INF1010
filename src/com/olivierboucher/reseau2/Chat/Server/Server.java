@@ -7,13 +7,12 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Created by olivier on 2015-10-06.
  */
 public class Server implements IServerClientDelegate {
-    public static final String SERVER_NICK = "$SERVER";
+    public static final String SERVER_NICK = "SERVER";
     private int port;
     private ServerSocket srvSocket;
     private List<ServerClient> clients;
@@ -147,22 +146,25 @@ public class Server implements IServerClientDelegate {
 
                 synchronized (this) {
                     message.append(clients.size());
-                    message.append(String.format("%s", clients.size()>1 ? "persons online." : "person online."));
+                    message.append(String.format("%s", clients.size()>1 ? " persons online." : " person online."));
                     message.append(Command.NEWLINE);
 
                     clients.stream()
                             .filter(ServerClient::getConfirmed)
                             .forEach(x -> {
+                                System.out.println(String.format("List %s", x.getNick()));
                                 message.append(x.getNick());
                                 message.append(Command.NEWLINE);
                             });
                 }
-
+                System.out.println(String.format("Message is %s", message.toString()));
                 Command cmd = new Command();
                 cmd.setSender(SERVER_NICK);
                 cmd.setVerb(Command.MSG_CMD);
                 cmd.setMessage(message.toString());
-
+                cmd.setTargetId(Command.CommandTarget.PRIVATE);
+                cmd.setTargetName(serverClient.getNick());
+                System.out.println(cmd.toCommandString());
                 serverClient.sendCommand(cmd);
                 break;
 
