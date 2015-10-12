@@ -128,6 +128,7 @@ public class Server implements IServerClientDelegate {
                         //Broadcast to everyone
                         //List concurrency once again
                         System.out.println(String.format("Broadcasting: %s", command.getMessage()));
+                        command.setSender(serverClient.getNick());
                         synchronized (this) {
                             clients.stream().filter(ServerClient::getConfirmed).forEach(x -> x.sendCommand(command));
                         }

@@ -114,9 +114,14 @@ public class Command {
                 cmd.append(targetId.getPrefix());
                 cmd.append(targetName);
                 cmd.append(" :");
+                cmd.append(message);
+            }
+            else {
+                cmd.append(":");
+                cmd.append(message);
             }
 
-            cmd.append(message);
+
 
             return cmd.toString();
         }

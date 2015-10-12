@@ -8,13 +8,15 @@ import java.util.regex.Pattern;
  */
 public class CommandParser {
 
-    private Pattern regex;
+    private Pattern commandStringRegex;
+    private Pattern privateMessageRegex;
 
     public CommandParser() {
-        regex = Pattern.compile("(([a-zA-Z0-9-_]+)(\\:\\s))?([A-Z0-9]+)(\\s(\\#|\\$)([a-zA-Z0-9-_]+))?\\s\\:(.+)?");
+        commandStringRegex = Pattern.compile("(([a-zA-Z0-9-_]+)(\\:\\s))?([A-Z0-9]+)(\\s(\\#|\\$)([a-zA-Z0-9-_]+))?\\s\\:(.+)?");
+        privateMessageRegex = Pattern.compile("\\/w\\s([a-zA-Z0-9-_]+)\\s(.+)");
     }
 
-    public Command interpretCommandString(String commandString) throws CommandParserException {
+    public Command parseCommandString(String commandString) throws CommandParserException {
         //Group 0 : Full string
         //Group 1 : Ignore
         //Group 2 : Sender - Optional
@@ -24,7 +26,7 @@ public class CommandParser {
         //Group 6 : Target Identifier
         //Group 7 : Target name
         //Group 8 : Message
-        Matcher m = regex.matcher(commandString);
+        Matcher m = commandStringRegex.matcher(commandString);
         if (m.matches()) {
             Command cmd = new Command();
             cmd.setSender(m.group(2));
@@ -39,6 +41,40 @@ public class CommandParser {
         }
 
         throw new CommandParserException("CommandString is invalid");
+    }
+
+    public Command parseClientSyntax(String input) {
+        //Sanitize
+        String sanitized = input.replace("\n", Command.NEWLINE);
+
+        Command cmd = new Command();
+        Matcher privMsgMatcher = privateMessageRegex.matcher(input);
+        if(privMsgMatcher.matches()){
+            //Private message
+            cmd.setVerb(Command.MSG_CMD);
+            cmd.setTargetId(Command.CommandTarget.PRIVATE);
+            cmd.setTargetName(privMsgMatcher.group(1));
+            cmd.setMessage(privMsgMatcher.group(2));
+        }
+        else if(input.equalsIgnoreCase("/list")){
+            //List request
+            cmd.setVerb(Command.LIST_CMD);
+            cmd.setMessage("");
+        }
+        else if(input.toLowerCase().startsWith("/disconnect ")) {
+            //Disconnect
+            cmd.setVerb(Command.DISCONNECT_CMD);
+            cmd.setMessage(sanitized.substring(12));
+        }
+        else {
+            //Broadcast msg
+            cmd.setVerb(Command.MSG_CMD);
+            cmd.setTargetId(Command.CommandTarget.BROADCAST);
+            cmd.setTargetName("ALL");
+            cmd.setMessage(sanitized);
+        }
+
+        return cmd;
     }
 }
 

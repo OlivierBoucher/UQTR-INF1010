@@ -1,5 +1,6 @@
 package com.olivierboucher.reseau2.Chat.Client;
 
+import com.olivierboucher.reseau2.Chat.Common.Command;
 import com.olivierboucher.reseau2.Chat.Common.CommandParser;
 import com.olivierboucher.reseau2.Chat.Common.CommandParserException;
 
@@ -33,7 +34,7 @@ public class ChatClient {
                         String cmdString;
                         if((cmdString = reader.readLine()) != null){
                             try {
-                                msgHandler.handleCommand(parser.interpretCommandString(cmdString));
+                                msgHandler.handleCommand(parser.parseCommandString(cmdString));
                             } catch (CommandParserException e) {
                                 //Ignore the command
                                 System.out.println("Recieved an invalid commandString");
@@ -60,8 +61,24 @@ public class ChatClient {
     }
 
     public void sendCommand(String command){
+
+        Command cmd = parser.parseClientSyntax(command);
         try {
-            writer.write(command);
+            writer.write(cmd.toCommandString());
+            writer.newLine();
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendNickCommand(String nick) {
+        Command cmd = new Command();
+        cmd.setVerb(Command.NICK_CMD);
+        cmd.setMessage(nick);
+
+        try {
+            writer.write(cmd.toCommandString());
             writer.newLine();
             writer.flush();
         } catch (IOException e) {

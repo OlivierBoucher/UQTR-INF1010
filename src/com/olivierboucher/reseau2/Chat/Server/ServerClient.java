@@ -75,7 +75,7 @@ public class ServerClient {
                         String cmdString;
                         if((cmdString = reader.readLine()) != null){
                             try {
-                                delegate.newCommandRecievedFromClient(ServerClient.this, interpreter.interpretCommandString(cmdString));
+                                delegate.newCommandRecievedFromClient(ServerClient.this, interpreter.parseCommandString(cmdString));
                             } catch (CommandParserException e) {
                                 //Ignore the command
                                 System.out.println("Received an invalid commandString");

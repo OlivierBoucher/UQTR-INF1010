@@ -17,22 +17,19 @@ import java.io.IOException;
 public class MainController implements IClientMessageHandler {
     @FXML
     private ListView<String> chatListView;
-
-    private ObservableList<String> chatHistory = FXCollections.observableArrayList();
-
     @FXML
     private TextArea input;
-
     @FXML
     private Button sendButton;
 
+    private ObservableList<String> chatHistory = FXCollections.observableArrayList();
     private ChatClient chatClient;
     private ClientMain mainApp;
 
     public MainController() {
         try {
             chatClient = new ChatClient("127.0.0.1", 1337, this);
-            chatClient.sendCommand("NICK :Olivier");
+            chatClient.sendNickCommand("Olivier");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -54,12 +51,8 @@ public class MainController implements IClientMessageHandler {
 
     @Override
     public void handleCommand(Command command) {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                // update UI:
-                chatHistory.add(String.format("[%s]: %s", command.getSender(), command.getMessage()));
-            }
+        Platform.runLater(() -> {
+            chatHistory.add(String.format("[%s]: %s", command.getSender(), command.getMessage().replace(Command.NEWLINE, "\r\n")));
         });
     }
 }
