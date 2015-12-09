@@ -5,6 +5,7 @@ import com.olivierboucher.reseau2.Chat.Client.GUI.Views.NicknameSelectDialog;
 import com.olivierboucher.reseau2.Chat.Client.IClientMessageHandler;
 import com.olivierboucher.reseau2.Chat.ClientMain;
 import com.olivierboucher.reseau2.Chat.Common.Command;
+import com.olivierboucher.reseau2.Chat.Server.Server;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -66,8 +67,27 @@ public class MainController implements IClientMessageHandler {
 
     @Override
     public void handleCommand(Command command) {
-        Platform.runLater(() -> {
-            chatHistory.add(String.format("[%s]: %s", command.getSender(), command.getMessage().replace(Command.NEWLINE, "\r\n")));
-        });
+        switch(command.getVerb()){
+            case Command.MSG_CMD:
+                if(command.getTargetId() == Command.CommandTarget.PRIVATE){
+                    Platform.runLater(() -> {
+                        String format = command.getSender().equalsIgnoreCase(Server.SERVER_NICK) ? "[%s]: %s" : "PRIVATE [%s]: %s";
+                        chatHistory.add(String.format(format, command.getSender(), command.getMessage().replace(Command.NEWLINE, "\r\n")));
+                    });
+                }
+                else {
+                    Platform.runLater(() -> {
+                        String msg = command.getSender().equalsIgnoreCase(Server.SERVER_NICK) ?
+                                String.format("[%s]: %s", command.getSender(), command.getMessage().replace(Command.NEWLINE, "\r\n")) :
+                                String.format("#%s [%s]: %s", command.getTargetName(), command.getSender(), command.getMessage().replace(Command.NEWLINE, "\r\n"));
+                        chatHistory.add(msg);
+                    });
+                }
+                break;
+        }
+    }
+
+    public void willExit(){
+        chatClient.disconnect();
     }
 }

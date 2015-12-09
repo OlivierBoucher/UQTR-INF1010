@@ -39,6 +39,7 @@ public class ClientMain extends Application {
             Scene scene = new Scene(rootLayout);
             primaryStage.setScene(scene);
             primaryStage.setOnCloseRequest(t -> {
+                ctrl.willExit();
                 Platform.exit();
                 System.exit(0);
             });

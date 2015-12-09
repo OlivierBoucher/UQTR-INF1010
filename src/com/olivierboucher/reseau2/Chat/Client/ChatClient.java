@@ -12,6 +12,7 @@ import java.net.Socket;
  */
 public class ChatClient {
     private Socket connection;
+    private String nick;
     private BufferedWriter writer;
     private Boolean keepAlive;
     private Thread readingThread;
@@ -60,9 +61,15 @@ public class ChatClient {
         readingThread.start();
     }
 
-    public void sendCommand(String command){
+    public void disconnect() {
+        if(connection.isConnected()){
+            keepAlive = false;
+            readingThread.interrupt();
+            sendQuitCommand();
+        }
+    }
 
-        Command cmd = parser.parseClientSyntax(command);
+    private void sendCommand(Command cmd){
         try {
             writer.write(cmd.toCommandString());
             writer.newLine();
@@ -72,18 +79,25 @@ public class ChatClient {
         }
     }
 
+    public void sendQuitCommand(){
+        Command cmd = new Command();
+        cmd.setVerb(Command.DISCONNECT_CMD);
+        cmd.setMessage("");
+        sendCommand(cmd);
+    }
+
+    public void sendCommand(String command){
+
+        Command cmd = parser.parseClientSyntax(command);
+        sendCommand(cmd);
+    }
+
     public void sendNickCommand(String nick) {
+        this.nick = nick;
         Command cmd = new Command();
         cmd.setVerb(Command.NICK_CMD);
         cmd.setMessage(nick);
-
-        try {
-            writer.write(cmd.toCommandString());
-            writer.newLine();
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        sendCommand(cmd);
     }
 
     public Boolean getKeepAlive() {
