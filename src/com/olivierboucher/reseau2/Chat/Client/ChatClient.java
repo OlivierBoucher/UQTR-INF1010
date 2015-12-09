@@ -34,7 +34,7 @@ public class ChatClient {
                         String cmdString;
                         if((cmdString = reader.readLine()) != null){
                             try {
-                                msgHandler.handleCommand(parser.parseCommandString(cmdString));
+                                messageHandler.handleCommand(parser.parseCommandString(cmdString));
                             } catch (CommandParserException e) {
                                 //Ignore the command
                                 System.out.println("Recieved an invalid commandString");

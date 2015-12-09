@@ -1,18 +1,21 @@
 package com.olivierboucher.reseau2.Chat.Client.GUI.Controllers;
 
 import com.olivierboucher.reseau2.Chat.Client.ChatClient;
+import com.olivierboucher.reseau2.Chat.Client.GUI.Views.NicknameSelectDialog;
 import com.olivierboucher.reseau2.Chat.Client.IClientMessageHandler;
 import com.olivierboucher.reseau2.Chat.ClientMain;
 import com.olivierboucher.reseau2.Chat.Common.Command;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.util.Pair;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class MainController implements IClientMessageHandler {
     @FXML
@@ -29,9 +32,21 @@ public class MainController implements IClientMessageHandler {
     public MainController() {
         try {
             chatClient = new ChatClient("127.0.0.1", 1337, this);
-            chatClient.sendNickCommand("Olivier");
+
+            TextInputDialog dialog = new NicknameSelectDialog();
+
+            Optional<String> nickname = dialog.showAndWait();
+
+            if(!nickname.isPresent()){
+                System.out.println("Failed to choose a nickname");
+                System.exit(0);
+            }
+
+            chatClient.sendNickCommand(nickname.get());
+
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
