@@ -11,9 +11,12 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class ClientMain extends Application {
-
+    public static String serverIP = "";
     private Stage primaryStage;
     private AnchorPane rootLayout;
 
@@ -51,9 +54,25 @@ public class ClientMain extends Application {
             e.printStackTrace();
         }
     }
+    public static boolean validIP(String ip) {
+        if (ip == null || ip.isEmpty()) return false;
+        ip = ip.trim();
+        if ((ip.length() < 6) & (ip.length() > 15)) return false;
 
-
+        try {
+            Pattern pattern = Pattern.compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+            Matcher matcher = pattern.matcher(ip);
+            return matcher.matches();
+        } catch (PatternSyntaxException ex) {
+            return false;
+        }
+    }
     public static void main(String[] args) {
+        if(args.length != 1 && !validIP(args[0])){
+            System.out.println("You must provide the server's IP address as parameter.");
+            System.exit(1);
+        }
+        serverIP = args[0];
         launch(args);
     }
 }

@@ -39,7 +39,7 @@ public class MainController implements IClientMessageHandler {
 
     public MainController() {
         try {
-            chatClient = new ChatClient("127.0.0.1", 1337, this);
+            chatClient = new ChatClient(ClientMain.serverIP, 1337, this);
 
             promptForNick();
 
