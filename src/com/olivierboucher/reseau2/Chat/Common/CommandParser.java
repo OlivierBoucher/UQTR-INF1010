@@ -10,10 +10,12 @@ public class CommandParser {
 
     private Pattern commandStringRegex;
     private Pattern privateMessageRegex;
+    private Pattern groupMessageRegex;
 
     public CommandParser() {
         commandStringRegex = Pattern.compile("(([a-zA-Z0-9-_]+)(\\:\\s))?([A-Z0-9]+)(\\s(\\#|\\$)([a-zA-Z0-9-_]+))?\\s\\:(.+)?");
         privateMessageRegex = Pattern.compile("\\/w\\s([a-zA-Z0-9-_]+)\\s(.+)");
+        groupMessageRegex = Pattern.compile("\\/g\\s([a-zA-Z0-9-_]+)\\s(.+)");
     }
 
     public Command parseCommandString(String commandString) throws CommandParserException {
@@ -49,12 +51,20 @@ public class CommandParser {
 
         Command cmd = new Command();
         Matcher privMsgMatcher = privateMessageRegex.matcher(input);
+        Matcher groupMsgMatcher = groupMessageRegex.matcher(input);
         if(privMsgMatcher.matches()){
             //Private message
             cmd.setVerb(Command.MSG_CMD);
             cmd.setTargetId(Command.CommandTarget.PRIVATE);
             cmd.setTargetName(privMsgMatcher.group(1));
             cmd.setMessage(privMsgMatcher.group(2));
+        }
+        else if(groupMsgMatcher.matches()){
+            //Group message
+            cmd.setVerb(Command.MSG_CMD);
+            cmd.setTargetId(Command.CommandTarget.BROADCAST);
+            cmd.setTargetName(groupMsgMatcher.group(1));
+            cmd.setMessage(groupMsgMatcher.group(2));
         }
         else if(input.equalsIgnoreCase("/list")){
             //List request

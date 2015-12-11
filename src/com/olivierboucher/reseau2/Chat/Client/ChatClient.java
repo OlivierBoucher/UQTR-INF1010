@@ -69,7 +69,7 @@ public class ChatClient {
         }
     }
 
-    private void sendCommand(Command cmd){
+    public void sendCommand(Command cmd){
         try {
             writer.write(cmd.toCommandString());
             writer.newLine();

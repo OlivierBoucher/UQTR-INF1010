@@ -4,9 +4,7 @@ import com.olivierboucher.reseau2.Chat.Common.Command;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by olivier on 2015-10-06.
@@ -16,11 +14,13 @@ public class Server implements IServerClientDelegate {
     private int port;
     private ServerSocket srvSocket;
     private List<ServerClient> clients;
+    private Map<String, List<ServerClient>> groupsMap;
 
     public Server(int port) throws IOException {
         this.port = port;
         this.srvSocket = new ServerSocket(port);
         this.clients = new ArrayList<>();
+        this.groupsMap = new HashMap<>();
     }
 
     public void start() {
@@ -160,13 +160,26 @@ public class Server implements IServerClientDelegate {
                         }
                     }
                     else {
-                        //Broadcast to everyone
-                        //List concurrency once again
-                        System.out.println(String.format("Broadcasting: %s", command.getMessage()));
-                        synchronized (this) {
-                            clients.stream()
-                                   .filter(ServerClient::getConfirmed)
-                                   .forEach(x -> x.sendCommand(command));
+                        if(command.getTargetName().equalsIgnoreCase("all")){
+                            //Broadcast to everyone
+                            //List concurrency once again
+                            System.out.println(String.format("Broadcasting: %s", command.getMessage()));
+                            synchronized (this) {
+                                clients.stream()
+                                        .filter(ServerClient::getConfirmed)
+                                        .forEach(x -> x.sendCommand(command));
+                            }
+                        }
+                        else {
+                            String group = command.getTargetName().toUpperCase();
+                            synchronized (this){
+                                List<ServerClient> clientsInGroup = groupsMap.get(group);
+                                if(clientsInGroup != null && clientsInGroup.contains(serverClient)){
+                                    clients.stream()
+                                            .filter(x -> x.getConfirmed() && clientsInGroup.contains(x))
+                                            .forEach(x -> x.sendCommand(command));
+                                }
+                            }
                         }
                     }
                 }
@@ -176,6 +189,29 @@ public class Server implements IServerClientDelegate {
                 }
                 break;
 
+            case Command.JOIN_CMD:
+                String group = command.getMessage().toUpperCase();
+                //For map concurrency
+                synchronized (this){
+                    List<ServerClient> clientsFromGroup = groupsMap.get(group);
+                    if(clientsFromGroup == null){
+                        //The group does not exist yet
+                        groupsMap.put(group, new ArrayList<ServerClient>(){{
+                            add(serverClient);
+                        }});
+                    }
+                    else {
+                        //If the client is not already in the group, add him
+                        if(!clientsFromGroup.contains(serverClient)){
+                            clientsFromGroup.add(serverClient);
+                            groupsMap.put(group, clientsFromGroup);
+
+                            //TODO(Olivier): Broadcast to everyone in the group that a new person joined
+                        }
+                    }
+                }
+
+                break;
             default:
                 //Command not found
                 serverClient.sendCommand(Command.getCommandNotFoundError(command.getVerb()));
@@ -190,5 +226,10 @@ public class Server implements IServerClientDelegate {
         synchronized (this){
             clients.remove(serverClient);
         }
+    }
+
+    @Override
+    public void addClientToGroup(ServerClient serverClient, String group) {
+
     }
 }

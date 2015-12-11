@@ -18,12 +18,21 @@ public class Command {
     public static final String DISCONNECT_CMD = "DISCONNECT";
     public static final String MSG_CMD = "MSG";
     public static final String LIST_CMD = "LIST";
+    public static final String JOIN_CMD = "JOIN";
 
     public static Command getNickTakenCommand(String nick) {
         Command cmd = new Command();
         cmd.setVerb(NICK_TAKEN_ERROR);
         cmd.setSender(Server.SERVER_NICK);
         cmd.setMessage(nick);
+
+        return cmd;
+    }
+
+    public static Command getJoinCommandForGroup(String group) {
+        Command cmd = new Command();
+        cmd.setVerb(Command.JOIN_CMD);
+        cmd.setMessage(group.toUpperCase());
 
         return cmd;
     }
