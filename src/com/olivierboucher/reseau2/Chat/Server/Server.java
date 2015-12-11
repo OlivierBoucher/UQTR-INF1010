@@ -62,12 +62,45 @@ public class Server implements IServerClientDelegate {
                 }
                 else {
                     serverClient.sendCommand(Command.getNickTakenCommand(desiredNick));
+                    break;
                 }
+            case Command.LIST_CMD:
+                //List concurrency again..
+                StringBuilder message = new StringBuilder();
+                message.append("There is ");
+
+                synchronized (this) {
+                    long onlineCount = clients
+                            .stream()
+                            .filter(ServerClient::getConfirmed)
+                            .count();
+
+                    message.append(onlineCount);
+                    message.append(String.format("%s", onlineCount > 1 ? " persons online." : " person online."));
+                    message.append(Command.NEWLINE);
+
+                    clients.stream()
+                            .filter(ServerClient::getConfirmed)
+                            .forEach(x -> {
+                                System.out.println(String.format("List %s", x.getNick()));
+                                message.append(x.getNick());
+                                message.append(Command.NEWLINE);
+                            });
+                }
+                System.out.println(String.format("Message is %s", message.toString()));
+                Command cmd = new Command();
+                cmd.setSender(SERVER_NICK);
+                cmd.setVerb(Command.MSG_CMD);
+                cmd.setMessage(message.toString());
+                cmd.setTargetId(Command.CommandTarget.PRIVATE);
+                cmd.setTargetName(serverClient.getNick());
+                System.out.println(cmd.toCommandString());
+                serverClient.sendCommand(cmd);
                 break;
 
             case Command.DISCONNECT_CMD:
                 if(serverClient.getConfirmed()){
-                    StringBuilder message = new StringBuilder();
+                    message = new StringBuilder();
                     message.append(serverClient.getNick());
 
                     if(command.getMessage() == null || command.getMessage().equalsIgnoreCase("")) {
@@ -78,7 +111,7 @@ public class Server implements IServerClientDelegate {
                         message.append(command.getMessage());
                     }
 
-                    Command cmd = Command.getDisconnectCommand(message.toString());
+                    cmd = Command.getDisconnectCommand(message.toString());
 
                     //List concurrency once again
                     synchronized (this) {
@@ -105,6 +138,7 @@ public class Server implements IServerClientDelegate {
 
             case Command.MSG_CMD:
                 if(serverClient.getConfirmed()){
+                    command.setSender(serverClient.getNick());
                     if(command.getTargetId() == Command.CommandTarget.PRIVATE){
                         String targetNick = command.getTargetName();
                         Optional<ServerClient> foundTarget;
@@ -118,19 +152,21 @@ public class Server implements IServerClientDelegate {
 
                         if(foundTarget.isPresent()){
                             foundTarget.get().sendCommand(command);
+                            serverClient.sendCommand(command);
                         }
                         else {
                             //Send target not found error
-                            serverClient.sendCommand(Command.getTargetNotFoundError(targetNick));
+                            serverClient.sendCommand(Command.getTargetNotFoundError(serverClient.getNick()));
                         }
                     }
                     else {
                         //Broadcast to everyone
                         //List concurrency once again
                         System.out.println(String.format("Broadcasting: %s", command.getMessage()));
-                        command.setSender(serverClient.getNick());
                         synchronized (this) {
-                            clients.stream().filter(ServerClient::getConfirmed).forEach(x -> x.sendCommand(command));
+                            clients.stream()
+                                   .filter(ServerClient::getConfirmed)
+                                   .forEach(x -> x.sendCommand(command));
                         }
                     }
                 }
@@ -138,35 +174,6 @@ public class Server implements IServerClientDelegate {
                     //Client is not confirmed, has no nick
                     serverClient.sendCommand(Command.getUnconfirmedClientError());
                 }
-                break;
-
-            case Command.LIST_CMD:
-                //List concurrency again..
-                StringBuilder message = new StringBuilder();
-                message.append("There is ");
-
-                synchronized (this) {
-                    message.append(clients.size());
-                    message.append(String.format("%s", clients.size()>1 ? " persons online." : " person online."));
-                    message.append(Command.NEWLINE);
-
-                    clients.stream()
-                            .filter(ServerClient::getConfirmed)
-                            .forEach(x -> {
-                                System.out.println(String.format("List %s", x.getNick()));
-                                message.append(x.getNick());
-                                message.append(Command.NEWLINE);
-                            });
-                }
-                System.out.println(String.format("Message is %s", message.toString()));
-                Command cmd = new Command();
-                cmd.setSender(SERVER_NICK);
-                cmd.setVerb(Command.MSG_CMD);
-                cmd.setMessage(message.toString());
-                cmd.setTargetId(Command.CommandTarget.PRIVATE);
-                cmd.setTargetName(serverClient.getNick());
-                System.out.println(cmd.toCommandString());
-                serverClient.sendCommand(cmd);
                 break;
 
             default:

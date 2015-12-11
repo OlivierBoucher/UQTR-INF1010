@@ -71,7 +71,11 @@ public class MainController implements IClientMessageHandler {
             case Command.MSG_CMD:
                 if(command.getTargetId() == Command.CommandTarget.PRIVATE){
                     Platform.runLater(() -> {
-                        String format = command.getSender().equalsIgnoreCase(Server.SERVER_NICK) ? "[%s]: %s" : "PRIVATE [%s]: %s";
+                        String format = command.getSender().equalsIgnoreCase(Server.SERVER_NICK) ?
+                                "[%s]: %s" :
+                                command.getSender().equalsIgnoreCase(chatClient.getNick()) ?
+                                        "You whispered to [%s]: %s" :
+                                        "PRIVATE [%s]: %s";
                         chatHistory.add(String.format(format, command.getSender(), command.getMessage().replace(Command.NEWLINE, "\r\n")));
                     });
                 }

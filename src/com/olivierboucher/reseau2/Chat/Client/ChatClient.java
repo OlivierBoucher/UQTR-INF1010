@@ -100,6 +100,9 @@ public class ChatClient {
         sendCommand(cmd);
     }
 
+    public String getNick() {
+        return nick;
+    }
     public Boolean getKeepAlive() {
         return keepAlive;
     }
